@@ -1,67 +1,44 @@
-/* eslint-disable max-len */
+/* eslint-disable no-param-reassign */
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { getTodos } from '../api';
 import { Todo } from '../types/Todo';
 
-type State = {
+type TodosState = {
   loaded: boolean;
+  error: string;
   items: Todo[];
 };
 
-const initialState: State = {
+const initialState: TodosState = {
   loaded: false,
+  error: '',
   items: [],
 };
 
-type SetTodosAction = {
-  type: 'todos/set',
-  payload: Todo[],
-};
+export const loadTodos = createAsyncThunk('todos/load', async () => {
+  // function must return a Promise
+  return getTodos();
+});
 
-type StartTodosLoadingAction = {
-  type: 'todos/startLoading',
-};
+const todosSlice = createSlice({
+  name: 'todos',
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder.addCase(loadTodos.pending, (state) => {
+      state.loaded = false;
+    });
 
-type FinishTodosLoadingAction = {
-  type: 'todos/finishLoading',
-};
+    builder.addCase(loadTodos.fulfilled, (state, action) => {
+      state.loaded = true;
+      state.items.push(...action.payload);
+    });
 
-type Action = (
-  SetTodosAction
-  | StartTodosLoadingAction
-  | FinishTodosLoadingAction
-);
+    builder.addCase(loadTodos.rejected, (state) => {
+      state.error = 'Something went wrong';
+      state.loaded = true;
+    });
+  },
+});
 
-const todosReducer = (state = initialState, action: Action): State => {
-  switch (action.type) {
-    case 'todos/set':
-      return {
-        ...state,
-        items: action.payload,
-      };
-
-    case 'todos/startLoading':
-      return {
-        ...state,
-        loaded: false,
-      };
-
-    case 'todos/finishLoading':
-      return {
-        ...state,
-        loaded: true,
-      };
-
-    default:
-      return state;
-  }
-};
-
-export const todosActions = {
-  setTodos: (todos: Todo[]): SetTodosAction => ({
-    type: 'todos/set',
-    payload: todos,
-  }),
-  startLoading: (): StartTodosLoadingAction => ({ type: 'todos/startLoading' }),
-  finishLoading: (): FinishTodosLoadingAction => ({ type: 'todos/finishLoading' }),
-};
-
-export default todosReducer;
+export default todosSlice.reducer;

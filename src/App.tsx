@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import './App.scss';
@@ -13,21 +13,17 @@ import { Loader } from './components/Loader';
 
 import { Status } from './types/Status';
 import { useAppSelector } from './app/hooks';
-import { loadTodos } from './app/thunk';
 import { clearTodo } from './features/selectedTodo';
+import { useGetTodosQuery } from './app/api';
 
 export const App: React.FC = () => {
   const dispatch = useDispatch();
-  const { items: todos, loaded } = useAppSelector(state => state.todos);
   const selectedTodo = useAppSelector(state => state.selectedTodo);
+  const { data: todos = [], isLoading } = useGetTodosQuery();
 
   const clearSelection = () => {
     dispatch(clearTodo());
   };
-
-  useEffect(() => {
-    dispatch(loadTodos());
-  }, []);
 
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<Status>('all');
@@ -62,10 +58,10 @@ export const App: React.FC = () => {
             </div>
 
             <div className="block">
-              {loaded ? (
-                <TodoList todos={visibleTodos} />
-              ) : (
+              {isLoading ? (
                 <Loader />
+              ) : (
+                <TodoList todos={visibleTodos} />
               )}
             </div>
           </div>

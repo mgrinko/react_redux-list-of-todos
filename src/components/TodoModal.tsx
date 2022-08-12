@@ -1,13 +1,11 @@
 import classNames from 'classnames';
-import React, { useEffect, useState } from 'react';
-import { getUser } from '../api';
+import React from 'react';
 import { Loader } from './Loader';
 import { Todo } from '../types/Todo';
-import { User } from '../types/User';
+import { useGetUserQuery } from '../app/api';
 
 type Props = {
   todo: Todo;
-  // eslint-disable-next-line react/require-default-props
   onClose?: () => void,
 };
 
@@ -15,19 +13,17 @@ export const TodoModal: React.FC<Props> = ({
   todo,
   onClose = () => {},
 }) => {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    if (todo.userId) {
-      getUser(todo.userId).then(setUser);
-    }
-  }, []);
+  const { data: user, isLoading, isError } = useGetUserQuery(todo.userId);
 
   return (
     <div className="modal is-active">
       <div className="modal-background" />
 
-      {!user ? <Loader /> : (
+      {isLoading && <Loader />}
+
+      {isError && <p>Error occurred</p>}
+
+      {user && (
         <div className="modal-card">
           <header className="modal-card-head">
             <div className="modal-card-title has-text-weight-medium">
