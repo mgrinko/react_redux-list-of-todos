@@ -1,5 +1,8 @@
 /* eslint-disable max-len */
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+
+import './App.scss';
 import 'bulma/css/bulma.css';
 import '@fortawesome/fontawesome-free/css/all.css';
 
@@ -8,20 +11,26 @@ import { TodoFilter } from './components/TodoFilter';
 import { TodoModal } from './components/TodoModal';
 import { Loader } from './components/Loader';
 
-import { getTodos } from './api';
-import { Todo } from './types/Todo';
 import { Status } from './types/Status';
+import { useAppSelector } from './app/hooks';
+import { loadTodos } from './app/thunk';
+import { clearTodo } from './features/selectedTodo';
 
 export const App: React.FC = () => {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [selectedTodo, setTodo] = useState<Todo | null>(null);
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState<Status>('all');
+  const dispatch = useDispatch();
+  const { items: todos, loaded } = useAppSelector(state => state.todos);
+  const selectedTodo = useAppSelector(state => state.selectedTodo);
+
+  const clearSelection = () => {
+    dispatch(clearTodo());
+  };
 
   useEffect(() => {
-    getTodos().then(setTodos);
+    dispatch(loadTodos());
   }, []);
 
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState<Status>('all');
   const lowerQuery = query.toLowerCase();
 
   const visibleTodos = todos.filter(todo => {
@@ -53,12 +62,8 @@ export const App: React.FC = () => {
             </div>
 
             <div className="block">
-              {todos.length > 0 ? (
-                <TodoList
-                  todos={visibleTodos}
-                  todoId={selectedTodo?.id}
-                  onTodoSelected={setTodo}
-                />
+              {loaded ? (
+                <TodoList todos={visibleTodos} />
               ) : (
                 <Loader />
               )}
@@ -70,7 +75,7 @@ export const App: React.FC = () => {
       {selectedTodo && (
         <TodoModal
           todo={selectedTodo}
-          onClose={() => setTodo(null)}
+          onClose={clearSelection}
         />
       )}
     </>
